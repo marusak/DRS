@@ -7,8 +7,8 @@ LSM6 compass;
 LSM6::vector<int16_t> running_min = {32767, 32767, 32767}, running_max = {-32768, -32768, -32768};
 
 char report[140];
-int minX = -1046, minY = -311, minZ = -1942;
-int maxX = 833, maxY = -10, maxZ = 1882;
+int minX = -1046, minY = -311, minZ = - 400;
+int maxX = 833, maxY = -10, maxZ = -300;
 
 void read_avg(int *rx, int *ry, int *rz){
     long sumX = 0, sumY = 0, sumZ = 0;
@@ -17,7 +17,7 @@ void read_avg(int *rx, int *ry, int *rz){
         compass.read();
         sumX += compass.a.x;
         sumY += compass.a.y;
-        sumZ += compass.a.z;
+        sumZ += compass.g.z;
     }
 
     *rx = sumX / 10;
@@ -62,7 +62,7 @@ void loop() {
             avgValues[1] = 0;
         if(avgValues[2] < maxZ && avgValues[2] > minZ)
             avgValues[2] = 0;
-        snprintf(report, sizeof(report), "{%+6d, %+6d}", avgValues[0], avgValues[1]);
+        snprintf(report, sizeof(report), "{%+6d, %+6d, %+6d}", avgValues[0], avgValues[1], avgValues[2]);
         Serial.println(report);
         delay(100);
     }
