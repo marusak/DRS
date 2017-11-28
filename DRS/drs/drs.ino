@@ -41,19 +41,19 @@ void read_senzor(int *fx, int *fy, int *fz,
 void setup() {
     Serial.begin(9600);
     Wire.begin();
-    front.init();
+    front.init(LSM6::device_DS33, LSM6::sa0_high);
     front.enableDefault();
     front.read();
-    back.init();
+    back.init(LSM303::device_auto, LSM303::sa0_high);
     back.enableDefault();
     back.read();
 }
 
 void loop() {
-   //Serial.println("HELLO");
     int avgValues[6];
     read_senzor(&avgValues[0], &avgValues[1], &avgValues[2],
                 &avgValues[3], &avgValues[4], &avgValues[5]);
+    /*
     if(avgValues[0] < f_maxX && avgValues[0] > f_minX)
         avgValues[0] = 0;
     if(avgValues[1] < f_maxY && avgValues[1] > f_minY)
@@ -66,6 +66,7 @@ void loop() {
         avgValues[4] = 0;
     if(avgValues[5] < b_maxZ && avgValues[5] > b_minZ)
         avgValues[5] = 0;
+        */
     snprintf(report, sizeof(report), "{%+6d, %+6d, %+6d, %+6d, %+6d, %+6d}",
             avgValues[0], avgValues[1], avgValues[2], avgValues[3], avgValues[4], avgValues[5]);
     Serial.println(report);
