@@ -1,21 +1,24 @@
 #include <Wire.h>
-#include <LSM6.h>
+#include <LSM303.h>
+#include <L3G.h>
 
-LSM6 front;
-LSM6::vector<int16_t> front_running_min = {32767, 32767, 32767}, front_running_max = {-32768, -32768, -32768};
+LSM303 front;
+LSM303::vector<int16_t> front_running_min = {32767, 32767, 32767}, front_running_max = {-32768, -32768, -32768};
+L3G front_gyro;
 
 char report[40];
-int f_minX = -318, f_minY = -389, f_minZ = -410;
-int f_maxX = -151, f_maxY = -124, f_maxZ = -273;
+int f_minX = -2935, f_minY = -2927, f_minZ = -450;
+int f_maxX = 1611, f_maxY = 1651, f_maxZ = 882;
 
 void read_senzor(int *fx, int *fy, int *fz){
     long sumFX = 0, sumFY = 0, sumFZ = 0;
     for(int i = 0; i < 10; i++){
         delay(10);
         front.read();
+        front_gyro.read();
         sumFX += front.a.x;
         sumFY += front.a.y;
-        sumFZ += front.g.z;
+        sumFZ += front_gyro.g.z;
     }
 
     *fx = sumFX / 10;
@@ -28,9 +31,13 @@ void setup() {
     Wire.begin();
     digitalWrite(SCL, LOW);
     digitalWrite(SDA, LOW);
-    front.init(LSM6::device_DS33, LSM6::sa0_high);
+    front.init();
+    //front.init(LSM6::device_DS33, LSM6::sa0_high);
     front.enableDefault();
     front.read();
+    front_gyro.init();
+    front_gyro.enableDefault();
+    front_gyro.read();
 
 }
 int normReading(int value, int minV, int maxV){
