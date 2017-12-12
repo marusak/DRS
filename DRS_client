@@ -1,0 +1,142 @@
+#!/usr/bin/env python
+"""
+Drifting Recognition Software
+
+Created as project on FIT BUT Brno, December 2017
+Authors:
+    Matej Marusak xmarus06@stud.fit.vutbr.cz
+    Andrej Barna  xbarna01@stud.fit.vutbr.cz
+"""
+
+
+import signal
+from bluetooth import BluetoothSocket, RFCOMM
+
+
+def get_values(line):
+    """Parse out all three axis from one line"""
+    values = line[1:].split()
+    x = values[0][:-1]
+    y = values[1][:-1]
+    z = values[2][:-1]
+    return (int(x), int(y), int(z))
+
+
+class States:
+    """Class simulating state automaton with hybrid states.
+       Is able to remember current state of car as well as last and possible next.
+    """
+    P_STOP = 0
+    STOP = 1
+    P_FORWARD = 2
+    FORWARD = 3
+    P_BACK = 4
+    BACK = 5
+    P_RIGHT_DRIFT = 6
+    RIGHT_DRIFT = 7
+    P_LEFT_DRIFT = 8
+    LEFT_DRIFT = 9
+
+    NAMES = ['STOP', 'STOP', 'FORWARD', 'FORWARD', 'BACK', 'BACK',
+             'RIGHT_DRIFT', 'RIGHT_DRIFT', 'LEFT_DRIFT', 'LEFT_DRIFT']
+
+    def __init__(self):
+        self.current = 1
+        self.last_state = 1
+
+    def do_step(self, x, y, z):
+        """Based on rules, decides what is current state based on previous.
+        Can set up prediction for the future state.
+        """
+        score = x + y + z
+        # Staying still
+        if abs(score) < 50:
+            if self.current in [States.P_STOP, States.STOP]:
+                self.current = States.STOP
+            else:
+                self.last_state = self.current
+                self.current = States.P_STOP
+
+        # Forward moving
+        elif x > 5000 and abs(y) < 1000 and abs(z) < 10000:
+            if self.current in [States.P_FORWARD, States.FORWARD]:
+                self.current = States.FORWARD
+            else:
+                self.last_state = self.current
+                self.current = States.P_FORWARD
+
+        # Backwards moving
+        elif x < -5000 and abs(y) < 1000 and abs(z) < 10000:
+            if self.current in [States.P_BACK, States.BACK]:
+                self.current = States.BACK
+            else:
+                self.last_state = self.current
+                self.current = States.P_BACK
+
+        # Right drifting
+        elif (x > 5000 and y > 5000) or z > 7500 or (y > 5000 and z > 5000):
+            if self.current in [States.P_RIGHT_DRIFT, States.RIGHT_DRIFT]:
+                self.current = States.RIGHT_DRIFT
+            else:
+                self.last_state = self.current
+                self.current = States.P_RIGHT_DRIFT
+
+        # Left drifting
+        elif (x < -5000 and y < -5000) or z < -7500 or (y < -5000 and z < -5000):
+            if self.current in [States.P_LEFT_DRIFT, States.LEFT_DRIFT]:
+                self.current = States.LEFT_DRIFT
+            else:
+                self.last_state = self.current
+                self.current = States.P_LEFT_DRIFT
+        else:
+            if self.current in [States.P_FORWARD, States.FORWARD]:
+                self.current = States.FORWARD
+            else:
+                self.last_state = self.current
+                self.current = States.P_FORWARD
+
+    def name_state(self):
+        """Translates state to human readable names."""
+        use_name = self.current
+        # Transient state
+        if self.current % 2 == 0:
+            use_name = self.last_state
+        return States.NAMES[use_name]
+
+
+def parsa_data(data, state):
+    """Data coming from BT are a bit messy, we need to split them to lines."""
+    while ("{" in data and "}" in data):
+        line = data[data.find('{'):data.find('}') + 1]
+        x, y, z = get_values(line)
+        state.do_step(x, y, z)
+        print(line[:] + " " + state.name_state())
+        data = data[data.find('}') + 1:]
+    return data
+
+
+def finish_up(signum, frame):
+    """When this script is killed, close BT socket."""
+    signal.signal(signal.SIGINT, original_sigint)
+    sock.close()
+
+
+# State automaton
+state = States()
+
+# Signals processing when script gets killed
+original_sigint = signal.getsignal(signal.SIGINT)
+signal.signal(signal.SIGINT, finish_up)
+
+# Connect to BT socket
+sock = BluetoothSocket(RFCOMM)
+sock.connect(("98:D3:32:30:AB:5C", 1))
+
+data = sock.recv(165)
+data = data[data.find('}') + 1:]
+# Main loop - receive data, when full entry came, set up new state
+while True:
+    data += sock.recv(165)
+    data = parsa_data(data, state)
+
+sock.close()
