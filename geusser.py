@@ -4,10 +4,10 @@ lines = []
 
 
 def get_values(line):
-    values = line.split()
-    x = values[1][:-1]
-    y = values[2][:-1]
-    z = values[3][:-1]
+    values = line[1:-1].split()
+    x = values[0][:-1]
+    y = values[1][:-1]
+    z = values[2][:-1]
     return (int(x), int(y), int(z))
 
 
