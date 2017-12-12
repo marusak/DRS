@@ -71,6 +71,12 @@ class States:
             else:
                 self.last_state = self.current
                 self.current = States.P_LEFT_DRIFT
+        else:
+            if self.current in [States.P_FORWARD, States.FORWARD]:
+                self.current = States.FORWARD
+            else:
+                self.last_state = self.current
+                self.current = States.P_FORWARD
 
     def name_state(self):
         use_name = self.current
