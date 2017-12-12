@@ -1,3 +1,12 @@
+/*
+ * Drifting Recognition Software
+ *
+ * Created as project on FIT BUT Brno, December 2017
+ * Authors:
+ *    Matej Marusak xmarus06@stud.fit.vutbr.cz
+ *    Andrej Barna  xbarna01@stud.fit.vutbr.cz
+ */
+
 #include <Wire.h>
 #include <LSM303.h>
 #include <L3G.h>
