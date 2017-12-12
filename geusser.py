@@ -57,7 +57,7 @@ class States:
                 self.current = States.P_BACK
 
         # Right drifting
-        elif x < -5000 and y < -5000 or z < -10000:
+        elif x > 5000 and y > 5000 or z > 10000:
             if self.current in [States.P_RIGHT_DRIFT, States.RIGHT_DRIFT]:
                 self.current = States.RIGHT_DRIFT
             else:
@@ -65,7 +65,7 @@ class States:
                 self.current = States.P_RIGHT_DRIFT
 
         # Left drifting
-        elif x > 5000 and y > 5000 or z > 10000:
+        elif x < -5000 and y < -5000 or z < -10000:
             if self.current in [States.P_LEFT_DRIFT, States.LEFT_DRIFT]:
                 self.current = States.LEFT_DRIFT
             else:
