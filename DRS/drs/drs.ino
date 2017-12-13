@@ -24,8 +24,8 @@ char report[40];
  *  These values were measured in process of calibration.
  *  See Docs for more information.
  */
-int f_minX = -2935, f_minY = -2927, f_minZ = -450;
-int f_maxX = 1611, f_maxY = 1651, f_maxZ = 882;
+int f_minX = -935, f_minY = -927, f_minZ = -450;
+int f_maxX = 611, f_maxY = 651, f_maxZ = 882;
 
 /* Read 10 values from the senzor and return their average value.
  * It helps with interpolating of the noise.
