@@ -28,23 +28,21 @@ class States:
     """
     P_STOP = 0
     STOP = 1
-    P_FORWARD = 2
-    FORWARD = 3
-    P_BACK = 4
-    BACK = 5
-    P_RIGHT_DRIFT = 6
-    RIGHT_DRIFT = 7
-    P_LEFT_DRIFT = 8
-    LEFT_DRIFT = 9
+    P_STRAIGHT = 2
+    STRAIGHT = 3
+    P_RIGHT_DRIFT = 4
+    RIGHT_DRIFT = 5
+    P_LEFT_DRIFT = 6
+    LEFT_DRIFT = 7
 
-    NAMES = ['STOP', 'STOP', 'FORWARD', 'FORWARD', 'BACK', 'BACK',
-             'RIGHT_DRIFT', 'RIGHT_DRIFT', 'LEFT_DRIFT', 'LEFT_DRIFT']
+    SLOWING_C = 5
+
+    NAMES = ['STOP', 'STOP', 'STRAIGHT', 'STRAIGHT', 'RIGHT_DRIFT',
+             'RIGHT_DRIFT', 'LEFT_DRIFT', 'LEFT_DRIFT']
 
     def __init__(self):
         self.current = 1
         self.last_state = 1
-        self.slowing = 0
-        self.rev_slowing = 0
 
     def do_step(self, x, y, z):
         """Based on rules, decides what is current state based on previous.
@@ -59,36 +57,21 @@ class States:
                 self.last_state = self.current
                 self.current = States.P_STOP
 
-        # Forward moving
-        elif x > 5000 and abs(y) < 1000 and abs(z) < 10000:
-            if self.current in [States.BACK]:
-                self.rev_slowing += 1
-            if (self.rev_slowing >= 3):
-                self.rev_slowing = 0
-                self.last = States.BACK
-                self.current = States.FORWARD
-            if self.current in [States.P_FORWARD, States.FORWARD]:
-                self.current = States.FORWARD
+        # Straight moving
+        """
+        Straight == forward or back moving, moving into corners without drifting
+        the wheels.
+        It is possible to recognize these movements with a little tweaking.
+        """
+        if ((x > 5000 or x < -5000) and abs(y) < 1000  and abs(z) < 10000):
+            if self.current in [States.P_STRAIGHT, States.STRAIGHT]:
+                self.current = States.STRAIGHT
             else:
                 self.last_state = self.current
-                self.current = States.P_FORWARD
-
-        # Backwards moving
-        elif x < -5000 and abs(y) < 1000 and abs(z) < 10000:
-            if self.current in [States.FORWARD]:
-                self.slowing += 1
-            if (self.slowing >= 3):
-                self.slowing = 0
-                self.last = States.FORWARD
-                self.current = States.BACK
-            if self.current in [States.P_BACK, States.BACK]:
-                self.current = States.BACK
-            else:
-                self.last_state = self.current
-                self.current = States.P_BACK
+                self.current = States.P_STRAIGHT
 
         # Right drifting
-        elif (x > 5000 and y > 5000) or z > 7500 or (y > 5000 and z > 5000):
+        elif (x > 5000 and y > 5000) or z > 9000 or (y > 5000 and z > 5000):
             if self.current in [States.P_RIGHT_DRIFT, States.RIGHT_DRIFT]:
                 self.current = States.RIGHT_DRIFT
             else:
@@ -96,18 +79,18 @@ class States:
                 self.current = States.P_RIGHT_DRIFT
 
         # Left drifting
-        elif (x < -5000 and y < -5000) or z < -7500 or (y < -5000 and z < -5000):
+        elif (x < -5000 and y < -5000) or z < -9000 or (y < -5000 and z < -5000):
             if self.current in [States.P_LEFT_DRIFT, States.LEFT_DRIFT]:
                 self.current = States.LEFT_DRIFT
             else:
                 self.last_state = self.current
                 self.current = States.P_LEFT_DRIFT
         else:
-            if self.current in [States.P_FORWARD, States.FORWARD]:
-                self.current = States.FORWARD
+            if self.current in [States.P_STRAIGHT, States.STRAIGHT]:
+                self.current = States.STRAIGHT
             else:
                 self.last_state = self.current
-                self.current = States.P_FORWARD
+                self.current = States.P_STRAIGHT
 
     def name_state(self):
         """Translates state to human readable names."""
@@ -124,7 +107,7 @@ def parsa_data(data, state):
         line = data[data.find('{'):data.find('}') + 1]
         x, y, z = get_values(line)
         state.do_step(x, y, z)
-        print(line[:] + " " + state.name_state())
+        print(state.name_state())
         data = data[data.find('}') + 1:]
     return data
 
