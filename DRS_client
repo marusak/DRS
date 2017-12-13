@@ -43,6 +43,8 @@ class States:
     def __init__(self):
         self.current = 1
         self.last_state = 1
+        self.slowing = 0
+        self.rev_slowing = 0
 
     def do_step(self, x, y, z):
         """Based on rules, decides what is current state based on previous.
@@ -59,6 +61,12 @@ class States:
 
         # Forward moving
         elif x > 5000 and abs(y) < 1000 and abs(z) < 10000:
+            if self.current in [States.BACK]:
+                self.rev_slowing += 1
+            if (self.rev_slowing >= 3):
+                self.rev_slowing = 0
+                self.last = States.BACK
+                self.current = States.FORWARD
             if self.current in [States.P_FORWARD, States.FORWARD]:
                 self.current = States.FORWARD
             else:
@@ -67,6 +75,12 @@ class States:
 
         # Backwards moving
         elif x < -5000 and abs(y) < 1000 and abs(z) < 10000:
+            if self.current in [States.FORWARD]:
+                self.slowing += 1
+            if (self.slowing >= 3):
+                self.slowing = 0
+                self.last = States.FORWARD
+                self.current = States.BACK
             if self.current in [States.P_BACK, States.BACK]:
                 self.current = States.BACK
             else:
